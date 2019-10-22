@@ -1,0 +1,11 @@
+version: '2.1'
+
+services:
+  cmpp:
+    image: lihuanghe/cmpp:latest
+    ports:
+      - 20003:7891
+    volumes:
+      - ./logs:/opt/cmpp/logs
+    command:
+    restart: on-failure

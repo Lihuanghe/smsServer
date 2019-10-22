@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<serverendpoints>
+	 <server>
+                <id>10086-gs</id>
+                <desc>甘肃服务端</desc>
+                <channelType>CMPP</channelType>
+                <isvalid>true</isvalid>
+                <endpoints>
+                        <endpoint>
+                                <id>10086s1-gansu</id>
+                                <desc>甘肃3rdbatchinfo</desc>
+                                <!-- UP,DOWN,DUPLEX -->
+                                <type>DUPLEX</type>
+                                <isvalid>true</isvalid>
+                                <group>S931</group>
+                                <user>GSDT01</user>
+                                <passwd>1qaz2wsx</passwd>
+                                <version>32</version>
+                                <idleTime>30</idleTime>
+                                <lifeTime>259200</lifeTime>
+                                <maxRetry>3</maxRetry>
+                                <maxMsgQueue>5</maxMsgQueue>
+                                <retryWaitTime>60</retryWaitTime>
+                                <maxChannels>200</maxChannels>
+								<writeLimit>200</writeLimit>
+								<readLimit>200</readLimit>
+                                <charset>UTF-8</charset>
+                                <isReSendFailMsg>false</isReSendFailMsg><!--0不重复发送、1 -->
+                                <supportLongMsg>true</supportLongMsg><!--0不支持、1 -->
+                                <businessHandlerSet>
+                                        <handler>com.zx.sms.handler.api.smsbiz.CMPPMessageReceiveHandler</handler>
+                                </businessHandlerSet>
+                        </endpoint>
+						<endpoint>
+                                <id>10086s2-gansu</id>
+                                <desc>甘肃3rdbatchinfo</desc>
+                                <!-- UP,DOWN,DUPLEX -->
+                                <type>DUPLEX</type>
+                                <isvalid>true</isvalid>
+                                <group>S931</group>
+                                <user>GSDT02</user>
+                                <passwd>1qaz2wsx</passwd>
+                                <version>32</version>
+                                <idleTime>30</idleTime>
+                                <lifeTime>259200</lifeTime>
+                                <maxRetry>3</maxRetry>
+                                <maxMsgQueue>5</maxMsgQueue>
+                                <retryWaitTime>60</retryWaitTime>
+                                <maxChannels>200</maxChannels>
+								<writeLimit>0</writeLimit>
+								<readLimit>0</readLimit>
+                                <charset>UTF-8</charset>
+                                <isReSendFailMsg>false</isReSendFailMsg><!--0不重复发送、1 -->
+                                <supportLongMsg>true</supportLongMsg><!--0不支持、1 -->
+                                <businessHandlerSet>
+                                        <handler>com.zx.sms.handler.api.smsbiz.CMPPMessageReceiveHandler</handler>
+                                </businessHandlerSet>
+                        </endpoint>
+                </endpoints>
+        </server>
+</serverendpoints>

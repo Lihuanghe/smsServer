@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Test configuration definition file that demonstrates complex initialization -->
+<configuration>
+	<header>
+		<result forceReloadCheck="true">
+			<expressionEngine
+				config-class="org.apache.commons.configuration.tree.xpath.XPathExpressionEngine" />
+		</result>
+	</header>
+
+	<xml fileName='server.xml' config-name="serverEndPoint">
+		<reloadingStrategy refreshDelay="10000"
+			config-class="org.apache.commons.configuration.reloading.FileChangedReloadingStrategy" />
+	</xml>
+
+</configuration>
