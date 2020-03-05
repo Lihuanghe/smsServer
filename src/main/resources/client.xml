@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<clientendpoints>
+	<endpoints>
+	<endpoint>
+			<id>client</id>
+			<desc>测试用户1</desc>
+			<channelType>CMPP</channelType>
+            <!--UP,DOWN,DUPLEX -->
+			<type>DUPLEX</type>
+			<isvalid>true</isvalid>
+			<group>S001</group>
+			<host>127.0.0.1</host>
+			<port>7890</port>
+			<user>GSDT01</user>
+			<passwd>1qaz2wsx</passwd>
+			<version>32</version>
+			<msgsrc>10001</msgsrc>
+			<spcode>10085</spcode>
+			<serviceid>000000</serviceid>
+			<idleTime>30</idleTime>
+			<lifeTime>259200</lifeTime>
+			<maxRetry>3</maxRetry>
+			<retryWaitTime>60</retryWaitTime>
+			<maxChannels>1</maxChannels>
+			<windows>16</windows>
+			<readLimit>10</readLimit>
+            <writeLimit>10</writeLimit>
+			<charset>UTF-8</charset>
+			<isReSendFailMsg>false</isReSendFailMsg>
+			<supportLongMsg>true</supportLongMsg>
+            <!-- Spring Bean Name -->
+			<businessHandlerSet>
+			    <handler>com.zx.sms.handler.api.smsbiz.CMPPSessionConnectedHandler</handler>
+			</businessHandlerSet>
+		</endpoint>
+	</endpoints>
+</clientendpoints>

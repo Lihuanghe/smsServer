@@ -14,20 +14,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
 import com.zx.sms.common.GlobalConstance;
 import com.zx.sms.connect.manager.EndpointEntity;
 import com.zx.sms.connect.manager.EndpointEntity.ChannelType;
+import com.zx.sms.connect.manager.cmpp.CMPPClientEndpointEntity;
 import com.zx.sms.connect.manager.cmpp.CMPPEndpointEntity;
 import com.zx.sms.connect.manager.cmpp.CMPPServerChildEndpointEntity;
 import com.zx.sms.connect.manager.cmpp.CMPPServerEndpointEntity;
 import com.zx.sms.handler.api.BusinessHandlerInterface;
-import com.zx.sms.config.SpringContextUtil;
 /**
  * @author Lihuanghe(18852780@qq.com) 加载configuration文件
  */
 @Component
+@PropertySource(value="classpath:sms.properties",encoding="UTF-8")
 public class ConfigFileUtil {
 	private static DefaultConfigurationBuilder configbuilder = new DefaultConfigurationBuilder();
 	private static boolean isLoad = false;
@@ -39,6 +41,18 @@ public class ConfigFileUtil {
 	
 	@Value("${cmppserver.host:0.0.0.0}")
 	private String host;
+	
+	@Value("${cmppclient.text:1234567}")
+	private String testSMS;
+	
+	@Value("${cmppclient.dcs:15}")
+	private byte dcs;
+	
+	@Value("${cmppclient.telephone:18703815655}")
+	private String telephone;
+	
+	@Value("${cmppclient.msgsrc}")
+	private String msgsrc;
 	
 	public synchronized static void loadconfiguration(String filepath) {
 		// 多线程并发时，需要判断一次是否被其它线程load过了
@@ -59,6 +73,23 @@ public class ConfigFileUtil {
 			// loadconfiguration("DBSQL.sql");
 		}
 
+	}
+	// 从客户加载xml配置文件
+	public List<CMPPClientEndpointEntity> loadClientEndpointEntity() {
+		initLoad();
+		XMLConfiguration clientconfig = (XMLConfiguration) config.getConfiguration("clientEndPoint");
+
+		HierarchicalConfiguration root = clientconfig.configurationAt("endpoints");
+		List<HierarchicalConfiguration> sessions = root.configurationsAt("endpoint");
+		if (sessions.isEmpty())
+			return null;
+		List<CMPPClientEndpointEntity> result = new ArrayList<CMPPClientEndpointEntity>();
+		for (HierarchicalConfiguration session : sessions) {
+			CMPPClientEndpointEntity tmp = new CMPPClientEndpointEntity();
+			buildCMPPEndpointEntity(session, tmp);
+			result.add(tmp);
+		}
+		return result;
 	}
 	// 从服务加载xml配置文件
 	public List<EndpointEntity> loadServerEndpointEntity() {
@@ -104,6 +135,9 @@ public class ConfigFileUtil {
 		tmp.setUserName(session.getString("user"));
 		tmp.setPassword(session.getString("passwd"));
 		tmp.setVersion(session.getShort("version", (short) 0x30));
+		tmp.setMsgSrc(session.getString("msgsrc"));
+		tmp.setSpCode(session.getString("spcode"));
+		tmp.setServiceId(session.getString("serviceid"));
 		tmp.setIdleTimeSec(session.getShort("idleTime", (short) 30));
 		tmp.setLiftTime(session.getLong("lifeTime", 259200L));
 		tmp.setMaxRetryCnt(session.getShort("maxRetry", (short) 3));
@@ -162,4 +196,38 @@ public class ConfigFileUtil {
 
 		return null;
 	}
+
+	public String getTestSMS() {
+		return testSMS;
+	}
+
+	public void setTestSMS(String testSMS) {
+		this.testSMS = testSMS;
+	}
+
+	public byte getDcs() {
+		return dcs;
+	}
+
+	public void setDcs(byte dcs) {
+		this.dcs = dcs;
+	}
+
+	public String getTelephone() {
+		return telephone;
+	}
+
+	public void setTelephone(String telephone) {
+		this.telephone = telephone;
+	}
+
+	public String getMsgsrc() {
+		return msgsrc;
+	}
+
+	public void setMsgsrc(String msgsrc) {
+		this.msgsrc = msgsrc;
+	}
+	
+	
 }

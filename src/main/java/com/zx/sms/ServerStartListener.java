@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import com.zx.sms.config.ConfigFileUtil;
 import com.zx.sms.connect.manager.EndpointManager;
+import com.zx.sms.connect.manager.cmpp.CMPPClientEndpointEntity;
 
 @Component
 public class ServerStartListener implements ApplicationListener<ContextRefreshedEvent> {
@@ -26,14 +27,31 @@ public class ServerStartListener implements ApplicationListener<ContextRefreshed
 		if (event.getApplicationContext().getParent() == null) {
 			ConfigFileUtil.loadconfiguration("configuration.xml");
 			final EndpointManager manager = EndpointManager.INS;
-			List list = config.loadServerEndpointEntity();// 服务终端实体类集合
-			manager.addAllEndpointEntity(list);
-			logger.info("load Server complete.");
+			List serverlist = config.loadServerEndpointEntity();// 服务终端实体类集合
+			manager.addAllEndpointEntity(serverlist);
+			
+			logger.info("load server complete.");
 			try {
 				manager.openAll();
 			} catch (Exception e) {
 				logger.error("load Server error.",e);
 			}
+			
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
+			}
+			List<CMPPClientEndpointEntity> clientlist = config.loadClientEndpointEntity();// 服务终端实体类集合
+			
+			for(CMPPClientEndpointEntity entity : clientlist) {
+				try {
+					manager.openEndpoint(entity);
+				} catch (Exception e) {
+					logger.error("load client error.",e);
+				}
+			}
+			logger.info("load client complete.");
 		}
 	}
 
