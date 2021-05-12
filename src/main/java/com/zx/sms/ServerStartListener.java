@@ -42,16 +42,6 @@ public class ServerStartListener implements ApplicationListener<ContextRefreshed
 			} catch (InterruptedException e1) {
 				e1.printStackTrace();
 			}
-			List<CMPPClientEndpointEntity> clientlist = config.loadClientEndpointEntity();// 服务终端实体类集合
-			
-			for(CMPPClientEndpointEntity entity : clientlist) {
-				try {
-					manager.openEndpoint(entity);
-				} catch (Exception e) {
-					logger.error("load client error.",e);
-				}
-			}
-			logger.info("load client complete.");
 		}
 	}
 

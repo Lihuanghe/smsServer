@@ -24,35 +24,26 @@ import com.zx.sms.connect.manager.cmpp.CMPPClientEndpointEntity;
 import com.zx.sms.connect.manager.cmpp.CMPPEndpointEntity;
 import com.zx.sms.connect.manager.cmpp.CMPPServerChildEndpointEntity;
 import com.zx.sms.connect.manager.cmpp.CMPPServerEndpointEntity;
+import com.zx.sms.connect.manager.sgip.SgipEndpointEntity;
+import com.zx.sms.connect.manager.sgip.SgipServerChildEndpointEntity;
+import com.zx.sms.connect.manager.sgip.SgipServerEndpointEntity;
+import com.zx.sms.connect.manager.smgp.SMGPEndpointEntity;
+import com.zx.sms.connect.manager.smgp.SMGPServerChildEndpointEntity;
+import com.zx.sms.connect.manager.smgp.SMGPServerEndpointEntity;
+import com.zx.sms.connect.manager.smpp.SMPPEndpointEntity;
+import com.zx.sms.connect.manager.smpp.SMPPServerChildEndpointEntity;
+import com.zx.sms.connect.manager.smpp.SMPPServerEndpointEntity;
 import com.zx.sms.handler.api.BusinessHandlerInterface;
 /**
  * @author Lihuanghe(18852780@qq.com) 加载configuration文件
  */
 @Component
-@PropertySource(value="classpath:sms.properties",encoding="UTF-8")
 public class ConfigFileUtil {
 	private static DefaultConfigurationBuilder configbuilder = new DefaultConfigurationBuilder();
 	private static boolean isLoad = false;
 	private static CombinedConfiguration config=null;
 	private static final Logger logger = LoggerFactory.getLogger(ConfigFileUtil.class);
 	
-	@Value("${cmppserver.port:7891}")
-	private String port;
-	
-	@Value("${cmppserver.host:0.0.0.0}")
-	private String host;
-	
-	@Value("${cmppclient.text:1234567}")
-	private String testSMS;
-	
-	@Value("${cmppclient.dcs:15}")
-	private byte dcs;
-	
-	@Value("${cmppclient.telephone:18703815655}")
-	private String telephone;
-	
-	@Value("${cmppclient.msgsrc}")
-	private String msgsrc;
 	
 	public synchronized static void loadconfiguration(String filepath) {
 		// 多线程并发时，需要判断一次是否被其它线程load过了
@@ -72,25 +63,8 @@ public class ConfigFileUtil {
 			loadconfiguration("configuration.xml");
 			// loadconfiguration("DBSQL.sql");
 		}
-
 	}
-	// 从客户加载xml配置文件
-	public List<CMPPClientEndpointEntity> loadClientEndpointEntity() {
-		initLoad();
-		XMLConfiguration clientconfig = (XMLConfiguration) config.getConfiguration("clientEndPoint");
 
-		HierarchicalConfiguration root = clientconfig.configurationAt("endpoints");
-		List<HierarchicalConfiguration> sessions = root.configurationsAt("endpoint");
-		if (sessions.isEmpty())
-			return null;
-		List<CMPPClientEndpointEntity> result = new ArrayList<CMPPClientEndpointEntity>();
-		for (HierarchicalConfiguration session : sessions) {
-			CMPPClientEndpointEntity tmp = new CMPPClientEndpointEntity();
-			buildCMPPEndpointEntity(session, tmp);
-			result.add(tmp);
-		}
-		return result;
-	}
 	// 从服务加载xml配置文件
 	public List<EndpointEntity> loadServerEndpointEntity() {
 		initLoad();
@@ -100,55 +74,84 @@ public class ConfigFileUtil {
 			return null;
 		List<EndpointEntity> result = new ArrayList<EndpointEntity>();
 		for (HierarchicalConfiguration server : servers) {
+			EndpointEntity tmpSever = null ;
+			
 			if("CMPP".equals(server.getString("channelType"))){
-				CMPPServerEndpointEntity tmpSever = new CMPPServerEndpointEntity();
+				tmpSever = new CMPPServerEndpointEntity();
+			}else if("SMPP".equals(server.getString("channelType"))) {
+				tmpSever = new SMPPServerEndpointEntity();
+			}else if("SMGP".equals(server.getString("channelType"))) {
+				tmpSever = new SMGPServerEndpointEntity();
+			}else if("SGIP".equals(server.getString("channelType"))) {
+				tmpSever = new SgipServerEndpointEntity();
+			}
 				tmpSever.setId(server.getString("id"));
 				tmpSever.setDesc(server.getString("desc"));
-				tmpSever.setValid(server.getBoolean("isvalid", true));
-				tmpSever.setHost(host);
-				tmpSever.setPort(Integer.parseInt(port));
-				tmpSever.setMaxChannels((short) 0x7fff);
+				tmpSever.setValid(true);
+				tmpSever.setHost(server.getString("host", "0.0.0.0"));
+				tmpSever.setPort(server.getInt("port", 7890));
 				HierarchicalConfiguration endpoints = server.configurationAt("endpoints");
 				List<HierarchicalConfiguration> sessions = endpoints.configurationsAt("endpoint");
 				if (sessions.isEmpty())
 					break;
 				for (HierarchicalConfiguration session : sessions) {
-					CMPPServerChildEndpointEntity tmp = new CMPPServerChildEndpointEntity();
-					buildCMPPEndpointEntity(session, tmp);
-					tmpSever.addchild(tmp);
+					if("CMPP".equals(server.getString("channelType"))){
+						CMPPServerChildEndpointEntity tmp = new CMPPServerChildEndpointEntity();
+						buildCMPPEndpointEntity(session, tmp);
+						((CMPPServerEndpointEntity)tmpSever).addchild(tmp);
+					}else if("SMPP".equals(server.getString("channelType"))) {
+						SMPPServerChildEndpointEntity tmp = new SMPPServerChildEndpointEntity();
+						buildSMPPEndpointEntity(session, tmp);
+						((SMPPServerEndpointEntity)tmpSever).addchild(tmp);
+					}else if("SMGP".equals(server.getString("channelType"))) {
+						SMGPServerChildEndpointEntity tmp = new SMGPServerChildEndpointEntity();
+						buildSMGPEndpointEntity(session, tmp);
+						((SMGPServerEndpointEntity)tmpSever).addchild(tmp);
+					}else if("SGIP".equals(server.getString("channelType"))) {
+						SgipServerChildEndpointEntity tmp = new SgipServerChildEndpointEntity();
+						buildSgipEndpointEntity(session, tmp);
+						((SgipServerEndpointEntity)tmpSever).addchild(tmp);
+					}
 				}
 				result.add(tmpSever);
-				return result;
-			}
 		}
-		return null;
+		return result;
 	}
-	private static void buildCMPPEndpointEntity(HierarchicalConfiguration session, CMPPEndpointEntity tmp) {
+	private static void buildSgipEndpointEntity(HierarchicalConfiguration session, SgipEndpointEntity tmp) {
 		initLoad();
 		tmp.setId(session.getString("id"));
-		tmp.setDesc(session.getString("desc"));
-		tmp.setChannelType(ChannelType.valueOf(ChannelType.class, session.getString("type", "DUPLEX")));
 		tmp.setValid(session.getBoolean("isvalid", true));
-		tmp.setGroupName(session.getString("group"));
-		tmp.setHost(session.getString("host"));
-		tmp.setPort(session.getInteger("port", 7891));
-		tmp.setUserName(session.getString("user"));
-		tmp.setPassword(session.getString("passwd"));
-		tmp.setVersion(session.getShort("version", (short) 0x30));
-		tmp.setMsgSrc(session.getString("msgsrc"));
-		tmp.setSpCode(session.getString("spcode"));
-		tmp.setServiceId(session.getString("serviceid"));
-		tmp.setIdleTimeSec(session.getShort("idleTime", (short) 30));
-		tmp.setLiftTime(session.getLong("lifeTime", 259200L));
-		tmp.setMaxRetryCnt(session.getShort("maxRetry", (short) 3));
-		tmp.setRetryWaitTimeSec(session.getShort("retryWaitTime", (short) 60));
+		tmp.setLoginName(session.getString("user"));
+		tmp.setLoginPassowrd(session.getString("passwd"));
+		tmp.setNodeId(session.getLong("nodeId", 259200L));
 		tmp.setMaxChannels(session.getShort("maxChannels"));
-//		tmp.setWindows(session.getShort("windows", (short) 3));
-		tmp.setChartset(Charset.forName(session.getString("charset", GlobalConstance.defaultTransportCharset.name())));
-		tmp.setReSendFailMsg(session.getBoolean("isReSendFailMsg", false));
-		tmp.setMaxMsgQueue(session.getShort("maxMsgQueue", (short) 5));
-		tmp.setWriteLimit(session.getInt("writeLimit", 0));
-		tmp.setReadLimit(session.getInt("readLimit", 0));
+		addBusinessHandlerSet(session,tmp);
+	}
+	
+	private static void buildSMGPEndpointEntity(HierarchicalConfiguration session, SMGPEndpointEntity tmp) {
+		initLoad();
+		tmp.setId(session.getString("id"));
+		tmp.setValid(session.getBoolean("isvalid", true));
+		tmp.setClientID(session.getString("user"));
+		tmp.setPassword(session.getString("passwd"));
+		tmp.setClientVersion(session.getByte("version", (byte) 0x30));
+		tmp.setMaxChannels(session.getShort("maxChannels"));
+		addBusinessHandlerSet(session,tmp);
+
+	}
+	
+	private static void buildSMPPEndpointEntity(HierarchicalConfiguration session, SMPPEndpointEntity tmp) {
+		initLoad();
+		tmp.setId(session.getString("id"));
+		tmp.setValid(session.getBoolean("isvalid", true));
+		tmp.setSystemId(session.getString("user"));
+		tmp.setPassword(session.getString("passwd"));
+		tmp.setMaxChannels(session.getShort("maxChannels"));
+		addBusinessHandlerSet(session,tmp);
+
+	}
+	
+	private static void addBusinessHandlerSet(HierarchicalConfiguration session,EndpointEntity tmp) {
 		HierarchicalConfiguration handlerSet = session.configurationAt("businessHandlerSet");
 
 		List<Object> handlers = handlerSet.getList("handler");
@@ -173,6 +176,17 @@ public class ConfigFileUtil {
 				} 
 			}
 		}
+	}
+	
+	private static void buildCMPPEndpointEntity(HierarchicalConfiguration session, CMPPEndpointEntity tmp) {
+		initLoad();
+		tmp.setId(session.getString("id"));
+		tmp.setValid(session.getBoolean("isvalid", true));
+		tmp.setUserName(session.getString("user"));
+		tmp.setPassword(session.getString("passwd"));
+		tmp.setVersion(session.getShort("version", (short) 0x30));
+		tmp.setMaxChannels(session.getShort("maxChannels"));
+		addBusinessHandlerSet(session,tmp);
 
 	}
 	
@@ -196,38 +210,5 @@ public class ConfigFileUtil {
 
 		return null;
 	}
-
-	public String getTestSMS() {
-		return testSMS;
-	}
-
-	public void setTestSMS(String testSMS) {
-		this.testSMS = testSMS;
-	}
-
-	public byte getDcs() {
-		return dcs;
-	}
-
-	public void setDcs(byte dcs) {
-		this.dcs = dcs;
-	}
-
-	public String getTelephone() {
-		return telephone;
-	}
-
-	public void setTelephone(String telephone) {
-		this.telephone = telephone;
-	}
-
-	public String getMsgsrc() {
-		return msgsrc;
-	}
-
-	public void setMsgsrc(String msgsrc) {
-		this.msgsrc = msgsrc;
-	}
-	
 	
 }

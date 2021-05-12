@@ -47,7 +47,7 @@
 	</logger>
 
 	<logger name="com.zx.sms" additivity="false">
-		<level value="info" />
+		<level value="debug" />
 		<appender-ref ref="DEFAULT" />
 	</logger>
 	

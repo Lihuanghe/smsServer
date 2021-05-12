@@ -12,8 +12,5 @@
 		<reloadingStrategy refreshDelay="10000"
 			config-class="org.apache.commons.configuration.reloading.FileChangedReloadingStrategy" />
 	</xml>
-	<xml fileName='client.xml' config-name="clientEndPoint">
-		<reloadingStrategy refreshDelay="10000"
-			config-class="org.apache.commons.configuration.reloading.FileChangedReloadingStrategy" />
-	</xml>
+
 </configuration>

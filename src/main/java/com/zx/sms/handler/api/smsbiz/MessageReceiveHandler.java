@@ -24,7 +24,7 @@ import io.netty.util.concurrent.GenericFutureListener;
 @Component
 public abstract class MessageReceiveHandler extends AbstractBusinessHandler {
 	private static final Logger logger = LoggerFactory.getLogger(MessageReceiveHandler.class);
-	private int rate = 1;
+	private int rate = 10;
 
 	private AtomicLong cnt = new AtomicLong();
 	private long lastNum = 0;
@@ -44,8 +44,8 @@ public abstract class MessageReceiveHandler extends AbstractBusinessHandler {
 						long nowcnt = cnt.get();
 						EndpointConnector conn = EndpointManager.INS.getEndpointConnector(getEndpointEntity());
 						
-						logger.info("channels : {},Totle Receive Msg Num:{},   speed : {}/s",
-								conn == null ? 0 : conn.getConnectionNum(), nowcnt, (nowcnt - lastNum) / rate);
+						logger.info("entity:{},channels : {},Totle Receive Msg Num:{},   speed : {}/s",
+								getEndpointEntity().getId(),conn == null ? 0 : conn.getConnectionNum(), nowcnt, (nowcnt - lastNum) / rate);
 						lastNum = nowcnt;
 						return true;
 				}
