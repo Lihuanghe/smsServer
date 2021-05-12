@@ -1,3 +1,5 @@
+支持CMPP ,SMPP ,SMGP,SGIP四种协议
+
 1: 修改  server.xml 配置文件，支持多个server 端口，每个server支持多个账号。
 		maxChannels 配置可限制单个账号的连接数。
 		
