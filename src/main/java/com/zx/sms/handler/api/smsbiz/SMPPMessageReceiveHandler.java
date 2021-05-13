@@ -13,6 +13,7 @@ import com.zx.sms.codec.smpp.msg.DeliverSmResp;
 import com.zx.sms.codec.smpp.msg.SubmitSm;
 import com.zx.sms.codec.smpp.msg.SubmitSmResp;
 import com.zx.sms.common.util.ChannelUtil;
+import com.zx.sms.common.util.MsgId;
 import com.zx.sms.common.util.StandardCharsets;
 
 import io.netty.channel.ChannelFuture;
@@ -35,9 +36,7 @@ public class SMPPMessageReceiveHandler extends MessageReceiveHandler {
 			return ctx.writeAndFlush(res);
 		} else if (msg instanceof SubmitSm) {
 			SubmitSmResp res = ((SubmitSm) msg).createResponse();
-			String msgcontent = ((SubmitSm) msg).getMsgContent();
-			byte[] receive = msgcontent.getBytes(StandardCharsets.UTF_8);
-			res.setMessageId(DigestUtils.md5Hex(receive));
+			res.setMessageId((new MsgId()).toString());
 			ChannelFuture future = ctx.writeAndFlush(res);
 
 			List<SubmitSm> frags = ((SubmitSm) msg).getFragments();
@@ -45,16 +44,19 @@ public class SMPPMessageReceiveHandler extends MessageReceiveHandler {
 				for (SubmitSm fragment : frags) {
 
 					SubmitSmResp fragres = ((SubmitSm) fragment).createResponse();
-					res.setMessageId(String.valueOf(System.currentTimeMillis()));
+					fragres.setMessageId((new MsgId()).toString());
 					ctx.writeAndFlush(fragres);
 
 					if (((SubmitSm) msg).getRegisteredDelivery() == 1) {
 						DeliverSmReceipt report = new DeliverSmReceipt();
-						report.setId(String.valueOf(fragment.getSequenceNumber()));
+						report.setId(fragres.getMessageId());
 						report.setSourceAddress(((SubmitSm) msg).getDestAddress());
 						report.setDestAddress(((SubmitSm) msg).getSourceAddress());
 						report.setStat("DELIVRD");
-						report.setText(fragment.getMsgContent());
+						report.setText("");
+						report.setErr("");
+						report.setSub("");
+						report.setDlvrd("");
 						report.setSubmit_date(DateFormatUtils.format(new Date(), "yyMMddHHmm"));
 						report.setDone_date(DateFormatUtils.format(new Date(), "yyMMddHHmm"));
 						ctx.writeAndFlush(report);
@@ -63,11 +65,14 @@ public class SMPPMessageReceiveHandler extends MessageReceiveHandler {
 			}
 			if (((SubmitSm) msg).getRegisteredDelivery() == 1) {
 				DeliverSmReceipt report = new DeliverSmReceipt();
-				report.setId(String.valueOf(res.getSequenceNumber()));
+				report.setId(res.getMessageId());
 				report.setSourceAddress(((SubmitSm) msg).getDestAddress());
 				report.setDestAddress(((SubmitSm) msg).getSourceAddress());
 				report.setStat("DELIVRD");
-				report.setText(((SubmitSm) msg).getMsgContent());
+				report.setText("");
+				report.setErr("");
+				report.setSub("");
+				report.setDlvrd("");
 				report.setSubmit_date(DateFormatUtils.format(new Date(), "yyMMddHHmm"));
 				report.setDone_date(DateFormatUtils.format(new Date(), "yyMMddHHmm"));
 				try {

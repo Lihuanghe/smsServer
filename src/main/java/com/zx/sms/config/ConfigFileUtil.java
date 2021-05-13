@@ -15,6 +15,7 @@ import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.stereotype.Component;
 
 import com.zx.sms.connect.manager.EndpointEntity;
+import com.zx.sms.connect.manager.EndpointEntity.SupportLongMessage;
 import com.zx.sms.connect.manager.cmpp.CMPPEndpointEntity;
 import com.zx.sms.connect.manager.cmpp.CMPPServerChildEndpointEntity;
 import com.zx.sms.connect.manager.cmpp.CMPPServerEndpointEntity;
@@ -118,6 +119,7 @@ public class ConfigFileUtil {
 		tmp.setLoginPassowrd(session.getString("passwd"));
 		tmp.setNodeId(session.getLong("nodeId", 259200L));
 		tmp.setMaxChannels(session.getShort("maxChannels"));
+		tmp.setSupportLongmsg(SupportLongMessage.NONE);
 		addBusinessHandlerSet(session,tmp);
 	}
 	
@@ -129,6 +131,7 @@ public class ConfigFileUtil {
 		tmp.setPassword(session.getString("passwd"));
 		tmp.setClientVersion(session.getByte("version", (byte) 0x30));
 		tmp.setMaxChannels(session.getShort("maxChannels"));
+		tmp.setSupportLongmsg(SupportLongMessage.NONE);
 		addBusinessHandlerSet(session,tmp);
 
 	}
@@ -140,6 +143,7 @@ public class ConfigFileUtil {
 		tmp.setSystemId(session.getString("user"));
 		tmp.setPassword(session.getString("passwd"));
 		tmp.setMaxChannels(session.getShort("maxChannels"));
+		tmp.setSupportLongmsg(SupportLongMessage.NONE);
 		addBusinessHandlerSet(session,tmp);
 
 	}
@@ -179,6 +183,7 @@ public class ConfigFileUtil {
 		tmp.setPassword(session.getString("passwd"));
 		tmp.setVersion(session.getShort("version", (short) 0x30));
 		tmp.setMaxChannels(session.getShort("maxChannels"));
+		tmp.setSupportLongmsg(SupportLongMessage.NONE);
 		addBusinessHandlerSet(session,tmp);
 
 	}
