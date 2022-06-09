@@ -1,8 +1,10 @@
 package com.zx.sms.handler.api.smsbiz;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.commons.lang3.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -65,14 +67,21 @@ public abstract class MessageReceiveHandler extends AbstractBusinessHandler {
 	@Override
 	public void channelRead(final ChannelHandlerContext ctx, Object msg) throws Exception {
 
-		ChannelFuture future = reponse(ctx, msg);
-		if (future != null)
-			future.addListener(new GenericFutureListener() {
-				@Override
-				public void operationComplete(Future future) throws Exception {
-					cnt.incrementAndGet();
-				}
-			});
+		ctx.executor().schedule(new Runnable() {
+			
+			@Override
+			public void run() {
+				ChannelFuture future = reponse(ctx, msg);
+				if (future != null)
+					future.addListener(new GenericFutureListener() {
+						@Override
+						public void operationComplete(Future future) throws Exception {
+							cnt.incrementAndGet();
+						}
+					});
+			}
+		}, RandomUtils.nextInt(5,120), TimeUnit.MILLISECONDS);
+
 	}
 
 	public MessageReceiveHandler clone() throws CloneNotSupportedException {
