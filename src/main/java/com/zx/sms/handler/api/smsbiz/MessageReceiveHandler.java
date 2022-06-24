@@ -4,11 +4,13 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.commons.lang3.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.zx.sms.BaseMessage;
+import com.zx.sms.config.RandomDelay;
 import com.zx.sms.connect.manager.EndpointConnector;
 import com.zx.sms.connect.manager.EndpointManager;
 import com.zx.sms.connect.manager.EventLoopGroupFactory;
@@ -20,7 +22,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
+import io.netty.util.concurrent.ScheduledFuture;
 
 @Sharable
 @Component
@@ -31,6 +33,9 @@ public abstract class MessageReceiveHandler extends AbstractBusinessHandler {
 	private AtomicLong cnt = new AtomicLong();
 	private long lastNum = 0;
 	private volatile boolean inited = false;
+
+	@Autowired
+	private RandomDelay delay;
 
 	@Override
 	public String name() {
@@ -43,13 +48,14 @@ public abstract class MessageReceiveHandler extends AbstractBusinessHandler {
 
 				@Override
 				public Boolean call() throws Exception {
-						long nowcnt = cnt.get();
-						EndpointConnector conn = EndpointManager.INS.getEndpointConnector(getEndpointEntity());
-						
-						logger.info("entity:{},channels : {},Totle Receive Msg Num:{},   speed : {}/s",
-								getEndpointEntity().getId(),conn == null ? 0 : conn.getConnectionNum(), nowcnt, (nowcnt - lastNum) / rate);
-						lastNum = nowcnt;
-						return true;
+					long nowcnt = cnt.get();
+					EndpointConnector conn = EndpointManager.INS.getEndpointConnector(getEndpointEntity());
+
+					logger.info("entity:{},channels : {},Totle Receive Msg Num:{},   speed : {}/s",
+							getEndpointEntity().getId(), conn == null ? 0 : conn.getConnectionNum(), nowcnt,
+							(nowcnt - lastNum) / rate);
+					lastNum = nowcnt;
+					return true;
 				}
 			}, new ExitUnlimitCirclePolicy() {
 				@Override
@@ -67,21 +73,24 @@ public abstract class MessageReceiveHandler extends AbstractBusinessHandler {
 	@Override
 	public void channelRead(final ChannelHandlerContext ctx, Object msg) throws Exception {
 
-		ctx.executor().schedule(new Runnable() {
-			
-			@Override
-			public void run() {
-				ChannelFuture future = reponse(ctx, msg);
-				if (future != null)
-					future.addListener(new GenericFutureListener() {
-						@Override
-						public void operationComplete(Future future) throws Exception {
-							cnt.incrementAndGet();
-						}
-					});
-			}
-		}, RandomUtils.nextInt(5,120), TimeUnit.MILLISECONDS);
+		int d = delay.delay();
 
+		if(d>0) {
+			ScheduledFuture future = ctx.executor().schedule(new Runnable() {
+
+				@Override
+				public void run() {
+					ChannelFuture future = reponse(ctx, msg);
+				}
+			}, d, TimeUnit.MILLISECONDS);
+		}
+		if(msg instanceof BaseMessage) {
+			if(((BaseMessage)msg).isRequest()) {
+				cnt.incrementAndGet();
+			}
+				
+		}
+		ctx.fireChannelRead(msg);
 	}
 
 	public MessageReceiveHandler clone() throws CloneNotSupportedException {

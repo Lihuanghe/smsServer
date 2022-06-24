@@ -3,6 +3,7 @@ package com.zx.sms.handler.api.smsbiz;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.springframework.stereotype.Component;
 
@@ -12,6 +13,8 @@ import com.zx.sms.codec.cmpp.msg.CmppReportRequestMessage;
 import com.zx.sms.codec.cmpp.msg.CmppSubmitRequestMessage;
 import com.zx.sms.codec.cmpp.msg.CmppSubmitResponseMessage;
 import com.zx.sms.common.util.CachedMillisecondClock;
+import com.zx.sms.common.util.ChannelUtil;
+import com.zx.sms.common.util.MsgId;
 
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
@@ -43,6 +46,26 @@ public class CMPPMessageReceiveHandler extends MessageReceiveHandler {
 			CmppSubmitRequestMessage e = (CmppSubmitRequestMessage) msg;
 			
 			final List<CmppDeliverRequestMessage> reportlist = new ArrayList<CmppDeliverRequestMessage>();
+			
+			//echo指令回复上行短信 
+			
+			String command = e.getMsgContent();
+			
+			if(StringUtils.isNotBlank(command) && command.startsWith("echo")) {
+				String deliCommand = command.substring(4);
+				CmppDeliverRequestMessage msgdeli = new CmppDeliverRequestMessage();
+				msgdeli.setDestId(e.getSrcId());
+				msgdeli.setLinkid("0000");
+				msgdeli.setMsgContent(deliCommand.trim());
+				msgdeli.setMsgId(new MsgId());
+				
+				msgdeli.setServiceid("10086");
+				msgdeli.setSrcterminalId(e.getDestterminalId()[0]);
+//				msgdeli.setSrcterminalType((short) 1);
+				
+				
+				ctx.channel().writeAndFlush(msgdeli);
+			}
 			
 			if(e.getFragments()!=null) {
 				//长短信会可能带有片断，每个片断都要回复一个response
@@ -100,5 +123,8 @@ public class CMPPMessageReceiveHandler extends MessageReceiveHandler {
 		}
 		return null;
 	}
+	
+	
+	
 
 }

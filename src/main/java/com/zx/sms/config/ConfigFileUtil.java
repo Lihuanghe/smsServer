@@ -14,7 +14,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.stereotype.Component;
 
+import com.zx.sms.common.GlobalConstance;
 import com.zx.sms.connect.manager.EndpointEntity;
+import com.zx.sms.connect.manager.ServerEndpoint;
 import com.zx.sms.connect.manager.EndpointEntity.SupportLongMessage;
 import com.zx.sms.connect.manager.cmpp.CMPPEndpointEntity;
 import com.zx.sms.connect.manager.cmpp.CMPPServerChildEndpointEntity;
@@ -28,7 +30,10 @@ import com.zx.sms.connect.manager.smgp.SMGPServerEndpointEntity;
 import com.zx.sms.connect.manager.smpp.SMPPEndpointEntity;
 import com.zx.sms.connect.manager.smpp.SMPPServerChildEndpointEntity;
 import com.zx.sms.connect.manager.smpp.SMPPServerEndpointEntity;
+import com.zx.sms.handler.api.AbstractBusinessHandler;
 import com.zx.sms.handler.api.BusinessHandlerInterface;
+
+import io.netty.channel.ChannelHandlerContext;
 /**
  */
 @Component
@@ -55,7 +60,6 @@ public class ConfigFileUtil {
 	private static void initLoad() {
 		if (!isLoad) {
 			loadconfiguration("configuration.xml");
-			// loadconfiguration("DBSQL.sql");
 		}
 	}
 
@@ -69,14 +73,14 @@ public class ConfigFileUtil {
 		List<EndpointEntity> result = new ArrayList<EndpointEntity>();
 		for (HierarchicalConfiguration server : servers) {
 			EndpointEntity tmpSever = null ;
-			
-			if("CMPP".equals(server.getString("channelType"))){
+			String serverType = server.getString("channelType");
+			if("CMPP".equals(serverType)){
 				tmpSever = new CMPPServerEndpointEntity();
-			}else if("SMPP".equals(server.getString("channelType"))) {
+			}else if("SMPP".equals(serverType)) {
 				tmpSever = new SMPPServerEndpointEntity();
-			}else if("SMGP".equals(server.getString("channelType"))) {
+			}else if("SMGP".equals(serverType)) {
 				tmpSever = new SMGPServerEndpointEntity();
-			}else if("SGIP".equals(server.getString("channelType"))) {
+			}else if("SGIP".equals(serverType)) {
 				tmpSever = new SgipServerEndpointEntity();
 			}
 				tmpSever.setId(server.getString("id"));
@@ -89,23 +93,23 @@ public class ConfigFileUtil {
 				if (sessions.isEmpty())
 					break;
 				for (HierarchicalConfiguration session : sessions) {
-					if("CMPP".equals(server.getString("channelType"))){
-						CMPPServerChildEndpointEntity tmp = new CMPPServerChildEndpointEntity();
-						buildCMPPEndpointEntity(session, tmp);
-						((CMPPServerEndpointEntity)tmpSever).addchild(tmp);
-					}else if("SMPP".equals(server.getString("channelType"))) {
-						SMPPServerChildEndpointEntity tmp = new SMPPServerChildEndpointEntity();
-						buildSMPPEndpointEntity(session, tmp);
-						((SMPPServerEndpointEntity)tmpSever).addchild(tmp);
-					}else if("SMGP".equals(server.getString("channelType"))) {
-						SMGPServerChildEndpointEntity tmp = new SMGPServerChildEndpointEntity();
-						buildSMGPEndpointEntity(session, tmp);
-						((SMGPServerEndpointEntity)tmpSever).addchild(tmp);
-					}else if("SGIP".equals(server.getString("channelType"))) {
-						SgipServerChildEndpointEntity tmp = new SgipServerChildEndpointEntity();
-						buildSgipEndpointEntity(session, tmp);
-						((SgipServerEndpointEntity)tmpSever).addchild(tmp);
+					EndpointEntity tmp = null;
+					if("CMPP".equals(serverType)){
+						 tmp = new CMPPServerChildEndpointEntity();
+						buildCMPPEndpointEntity(session, (CMPPEndpointEntity)tmp);
+					}else if("SMPP".equals(serverType)) {
+						 tmp = new SMPPServerChildEndpointEntity();
+						buildSMPPEndpointEntity(session, (SMPPEndpointEntity)tmp);
+					}else if("SMGP".equals(serverType)) {
+						 tmp = new SMGPServerChildEndpointEntity();
+						buildSMGPEndpointEntity(session, (SMGPEndpointEntity)tmp);
+					}else if("SGIP".equals(serverType)) {
+						 tmp = new SgipServerChildEndpointEntity();
+						buildSgipEndpointEntity(session,(SgipEndpointEntity) tmp);
 					}
+					tmp.setSupportLongmsg(SupportLongMessage.BOTH);
+					
+					((ServerEndpoint)tmpSever).addchild(tmp);
 				}
 				result.add(tmpSever);
 		}
@@ -119,7 +123,7 @@ public class ConfigFileUtil {
 		tmp.setLoginPassowrd(session.getString("passwd"));
 		tmp.setNodeId(session.getLong("nodeId", 259200L));
 		tmp.setMaxChannels(session.getShort("maxChannels"));
-		tmp.setSupportLongmsg(SupportLongMessage.NONE);
+	
 		addBusinessHandlerSet(session,tmp);
 	}
 	
@@ -131,7 +135,6 @@ public class ConfigFileUtil {
 		tmp.setPassword(session.getString("passwd"));
 		tmp.setClientVersion(session.getByte("version", (byte) 0x30));
 		tmp.setMaxChannels(session.getShort("maxChannels"));
-		tmp.setSupportLongmsg(SupportLongMessage.NONE);
 		addBusinessHandlerSet(session,tmp);
 
 	}
@@ -143,7 +146,6 @@ public class ConfigFileUtil {
 		tmp.setSystemId(session.getString("user"));
 		tmp.setPassword(session.getString("passwd"));
 		tmp.setMaxChannels(session.getShort("maxChannels"));
-		tmp.setSupportLongmsg(SupportLongMessage.NONE);
 		addBusinessHandlerSet(session,tmp);
 
 	}
@@ -167,9 +169,21 @@ public class ConfigFileUtil {
 					continue;
 				}
 
-				BusinessHandlerInterface obj = getBeanFromCtx((String) handler);
-				if (obj != null) {
-					bizHandlers.add(obj);
+				BusinessHandlerInterface handlerobj = getBeanFromCtx((String) handler);
+				if (handlerobj != null) {
+					bizHandlers.add(new AbstractBusinessHandler() {
+
+					    @Override
+					    public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+					    	handlerobj.setEndpointEntity(getEndpointEntity());
+					    	ctx.pipeline().addAfter(GlobalConstance.sessionHandler, handlerobj.name(), handlerobj);
+					    	ctx.pipeline().remove(this);
+					    }
+						@Override
+						public String name() {
+							return "ResponseSenderHandler";
+						}
+					});
 				} 
 			}
 		}
@@ -183,7 +197,6 @@ public class ConfigFileUtil {
 		tmp.setPassword(session.getString("passwd"));
 		tmp.setVersion(session.getShort("version", (short) 0x30));
 		tmp.setMaxChannels(session.getShort("maxChannels"));
-		tmp.setSupportLongmsg(SupportLongMessage.NONE);
 		addBusinessHandlerSet(session,tmp);
 
 	}
