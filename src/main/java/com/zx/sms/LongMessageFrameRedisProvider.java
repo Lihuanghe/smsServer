@@ -36,7 +36,7 @@ public class LongMessageFrameRedisProvider implements LongMessageFrameProvider {
 		}
 
 		@Override
-		public void set(String key, List<LongMessageFrame> list, LongMessageFrame currFrame) {
+		public void set(LongSMSMessage msg,String key, List<LongMessageFrame> list, LongMessageFrame currFrame) {
 			map.put(key, list);
 		}
 		
