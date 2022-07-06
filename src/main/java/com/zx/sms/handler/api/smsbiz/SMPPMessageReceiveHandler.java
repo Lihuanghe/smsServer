@@ -26,13 +26,10 @@ public class SMPPMessageReceiveHandler extends MessageReceiveHandler {
 		
 		if(msg instanceof DeliverSmReceipt) {
 			DeliverSmResp res = ((DeliverSm) msg).createResponse();
-			res.setMessageId(String.valueOf(System.currentTimeMillis()));
 			return ctx.writeAndFlush(res);
 			
 		}else if (msg instanceof DeliverSm ) {
 			DeliverSmResp res = ((DeliverSm) msg).createResponse();
-			String msgcontent = ((DeliverSm) msg).getMsgContent();
-			res.setMessageId(DigestUtils.md5Hex(msgcontent.getBytes(StandardCharsets.UTF_8)));
 			return ctx.writeAndFlush(res);
 		} else if (msg instanceof SubmitSm) {
 			SubmitSmResp res = ((SubmitSm) msg).createResponse();
