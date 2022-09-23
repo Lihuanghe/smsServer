@@ -42,7 +42,7 @@
 	</appender>
 	
 	<logger name="entity" additivity="false">
-		<level value="info" />
+		<level value="debug" />
 		<appender-ref ref="SIFT" />
 	</logger>
 

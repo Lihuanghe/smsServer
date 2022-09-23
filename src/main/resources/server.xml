@@ -37,6 +37,8 @@
 					<passwd>1qaz2wsx</passwd>
 					<version>32</version>
 					<maxChannels>200</maxChannels>
+					<readLimit>1000</readLimit>
+					<writeLimit>0</writeLimit>
 					<businessHandlerSet>
 						<handler>com.zx.sms.handler.api.smsbiz.CMPPMessageReceiveHandler
 						</handler>

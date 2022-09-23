@@ -31,7 +31,7 @@
 		<dependency>
 			<groupId>com.chinamobile.cmos</groupId>
 			<artifactId>sms-core</artifactId>
-			<version>2.1.13.2</version>
+			<version>2.1.13.2-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-configuration</groupId>
@@ -71,9 +71,27 @@
 	</build>
 	<repositories>
 		<repository>
-			<id>myRepository</id>
+			<id>myRepository-snap</id>
 			<name>Repository for me</name>
-			<url>https://maven.aliyun.com/repository/central</url>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+		</repository>
+		<repository>
+			<id>myRepository-release</id>
+			<name>Repository for me</name>
+			<url>https://oss.sonatype.org/content/repositories/releases</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
 		</repository>
 	</repositories>
+
 </project>

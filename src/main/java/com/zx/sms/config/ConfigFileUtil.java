@@ -197,6 +197,7 @@ public class ConfigFileUtil {
 		tmp.setPassword(session.getString("passwd"));
 		tmp.setVersion(session.getShort("version", (short) 0x30));
 		tmp.setMaxChannels(session.getShort("maxChannels"));
+		tmp.setReadLimit(session.getInt("readLimit"));
 		addBusinessHandlerSet(session,tmp);
 
 	}
