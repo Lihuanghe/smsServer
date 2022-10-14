@@ -80,9 +80,11 @@ public abstract class MessageReceiveHandler extends AbstractBusinessHandler {
 
 				@Override
 				public void run() {
-					ChannelFuture future = reponse(ctx, msg);
+					 reponse(ctx, msg);
 				}
 			}, d, TimeUnit.MILLISECONDS);
+		}else {
+			 reponse(ctx, msg);
 		}
 		if(msg instanceof BaseMessage) {
 			if(((BaseMessage)msg).isRequest()) {

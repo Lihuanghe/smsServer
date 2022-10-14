@@ -7,13 +7,17 @@ import java.util.concurrent.locks.ReentrantLock;
 import javax.annotation.PostConstruct;
 
 import org.apache.commons.lang3.RandomUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 @Configuration
 public class RandomDelay {
-	@Value("${responseDelay}")
-	private String responseDelay;
+	
+	@Autowired
+	private Environment env;
+	
 	private ReentrantLock lock = new ReentrantLock();
 
 	private final static class Node {
@@ -31,6 +35,7 @@ public class RandomDelay {
 
 	@PostConstruct
 	private void init() {
+		String responseDelay = env.getProperty("responseDelay", "1:-");
 		String[] data = responseDelay.split(",");
 		for (String d : data) {
 			Integer[] rd = new Integer[2];
