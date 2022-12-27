@@ -24,16 +24,6 @@ public class SGIPMessageReceiveHandler extends MessageReceiveHandler {
 			resp.setResult((short)0);
 			resp.setTimestamp(deli.getTimestamp());
 			
-			List<SgipDeliverRequestMessage> deliarr = deli.getFragments();
-			if(deliarr!=null) {
-				for(SgipDeliverRequestMessage item:deliarr) {
-					SgipDeliverResponseMessage item_resp = new SgipDeliverResponseMessage(item.getHeader());
-					item_resp.setResult((short)0);
-					item_resp.setTimestamp(item.getTimestamp());
-					ctx.writeAndFlush(item_resp);
-				}
-			}
-			
 			return ctx.writeAndFlush(resp);
 		}else if(msg instanceof SgipSubmitRequestMessage) {
 			
@@ -43,22 +33,6 @@ public class SGIPMessageReceiveHandler extends MessageReceiveHandler {
 			resp.setResult((short)0);
 			
 			boolean sendreport = 1 == submit.getReportflag();
-			
-			List<SgipSubmitRequestMessage> deliarr = submit.getFragments();
-			if(deliarr!=null) {
-				for(SgipSubmitRequestMessage item:deliarr) {
-					SgipSubmitResponseMessage item_resp = new SgipSubmitResponseMessage(item.getHeader());
-					item_resp.setResult((short)0);
-					item_resp.setTimestamp(item.getTimestamp());
-					ctx.writeAndFlush(item_resp);
-					
-					if(sendreport) {
-						SgipReportRequestMessage report = new SgipReportRequestMessage();
-						report.setSequenceId(item_resp.getSequenceNumber());
-						ctx.writeAndFlush(report);
-					}
-				}
-			}
 			
 			ChannelFuture future =  ctx.writeAndFlush(resp);
 			if(sendreport) {

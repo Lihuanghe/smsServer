@@ -26,16 +26,6 @@ public class CMPPMessageReceiveHandler extends MessageReceiveHandler {
 		if (msg instanceof CmppDeliverRequestMessage) {
 			CmppDeliverRequestMessage e = (CmppDeliverRequestMessage) msg;
 			
-			if(e.getFragments()!=null) {
-				//长短信会带有片断
-				for(CmppDeliverRequestMessage frag:e.getFragments()) {
-					CmppDeliverResponseMessage responseMessage = new CmppDeliverResponseMessage(frag.getHeader().getSequenceId());
-					responseMessage.setResult(0);
-					responseMessage.setMsgId(frag.getMsgId());
-					ctx.channel().write(responseMessage);
-				}
-			}
-			
 			CmppDeliverResponseMessage responseMessage = new CmppDeliverResponseMessage(e.getHeader().getSequenceId());
 			responseMessage.setResult(0);
 			responseMessage.setMsgId(e.getMsgId());
@@ -46,49 +36,6 @@ public class CMPPMessageReceiveHandler extends MessageReceiveHandler {
 			CmppSubmitRequestMessage e = (CmppSubmitRequestMessage) msg;
 			
 			final List<CmppDeliverRequestMessage> reportlist = new ArrayList<CmppDeliverRequestMessage>();
-			
-			//echo指令回复上行短信 
-			
-			String command = e.getMsgContent();
-			
-			if(StringUtils.isNotBlank(command) && command.startsWith("echo")) {
-				String deliCommand = command.substring(4);
-				CmppDeliverRequestMessage msgdeli = new CmppDeliverRequestMessage();
-				msgdeli.setDestId(e.getSrcId());
-				msgdeli.setLinkid("0000");
-				msgdeli.setMsgContent(deliCommand.trim());
-				msgdeli.setMsgId(new MsgId());
-				
-				msgdeli.setServiceid("10086");
-				msgdeli.setSrcterminalId(e.getDestterminalId()[0]);
-//				msgdeli.setSrcterminalType((short) 1);
-				
-				
-				ctx.channel().writeAndFlush(msgdeli);
-			}
-			
-			if(e.getFragments()!=null) {
-				//长短信会可能带有片断，每个片断都要回复一个response
-				for(CmppSubmitRequestMessage frag:e.getFragments()) {
-					CmppSubmitResponseMessage responseMessage = new CmppSubmitResponseMessage(frag.getHeader().getSequenceId());
-					responseMessage.setResult(0);
-					ctx.channel().write(responseMessage);
-					
-					CmppDeliverRequestMessage deliver = new CmppDeliverRequestMessage();
-					deliver.setDestId(e.getSrcId());
-					deliver.setSrcterminalId(e.getDestterminalId()[0]);
-					CmppReportRequestMessage report = new CmppReportRequestMessage();
-					report.setDestterminalId(deliver.getSrcterminalId());
-					report.setMsgId(responseMessage.getMsgId());
-					String t = DateFormatUtils.format(CachedMillisecondClock.INS.now(), "yyMMddHHmm");
-					report.setSubmitTime(t);
-					report.setDoneTime(t);
-					report.setStat("DELIVRD");
-					report.setSmscSequence(0);
-					deliver.setReportRequestMessage(report);
-					reportlist.add(deliver);
-				}
-			}
 			
 			final CmppSubmitResponseMessage resp = new CmppSubmitResponseMessage(e.getHeader().getSequenceId());
 			resp.setResult(0);

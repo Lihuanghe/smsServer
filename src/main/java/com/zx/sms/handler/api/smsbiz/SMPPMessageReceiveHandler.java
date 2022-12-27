@@ -36,30 +36,6 @@ public class SMPPMessageReceiveHandler extends MessageReceiveHandler {
 			res.setMessageId((new MsgId()).toString());
 			ChannelFuture future = ctx.writeAndFlush(res);
 
-			List<SubmitSm> frags = ((SubmitSm) msg).getFragments();
-			if (frags != null && !frags.isEmpty()) {
-				for (SubmitSm fragment : frags) {
-
-					SubmitSmResp fragres = ((SubmitSm) fragment).createResponse();
-					fragres.setMessageId((new MsgId()).toString());
-					ctx.writeAndFlush(fragres);
-
-					if (((SubmitSm) msg).getRegisteredDelivery() == 1) {
-						DeliverSmReceipt report = new DeliverSmReceipt();
-						report.setId(fragres.getMessageId());
-						report.setSourceAddress(((SubmitSm) msg).getDestAddress());
-						report.setDestAddress(((SubmitSm) msg).getSourceAddress());
-						report.setStat("DELIVRD");
-						report.setText("");
-						report.setErr("");
-						report.setSub("");
-						report.setDlvrd("");
-						report.setSubmit_date(DateFormatUtils.format(new Date(), "yyMMddHHmm"));
-						report.setDone_date(DateFormatUtils.format(new Date(), "yyMMddHHmm"));
-						ctx.writeAndFlush(report);
-					}
-				}
-			}
 			if (((SubmitSm) msg).getRegisteredDelivery() == 1) {
 				DeliverSmReceipt report = new DeliverSmReceipt();
 				report.setId(res.getMessageId());

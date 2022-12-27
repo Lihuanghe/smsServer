@@ -32,6 +32,7 @@ import com.zx.sms.connect.manager.smpp.SMPPServerChildEndpointEntity;
 import com.zx.sms.connect.manager.smpp.SMPPServerEndpointEntity;
 import com.zx.sms.handler.api.AbstractBusinessHandler;
 import com.zx.sms.handler.api.BusinessHandlerInterface;
+import com.zx.sms.handler.api.smsbiz.CmppEchoDeliverHandler;
 
 import io.netty.channel.ChannelHandlerContext;
 /**
@@ -108,7 +109,7 @@ public class ConfigFileUtil {
 						buildSgipEndpointEntity(session,(SgipEndpointEntity) tmp);
 					}
 					tmp.setSupportLongmsg(SupportLongMessage.BOTH);
-					
+					tmp.setIdleTimeSec((short)10);
 					((ServerEndpoint)tmpSever).addchild(tmp);
 				}
 				result.add(tmpSever);
@@ -158,6 +159,8 @@ public class ConfigFileUtil {
 		List<BusinessHandlerInterface> bizHandlers = new ArrayList<BusinessHandlerInterface>();
 		tmp.setBusinessHandlerSet(bizHandlers);
 
+		bizHandlers.add(SpringContextUtil.getBean(CmppEchoDeliverHandler.class));
+		
 		if (handlers != null && !handlers.isEmpty()) {
 			for (Object handler : handlers) {
 				if (!tmp.isValid())
