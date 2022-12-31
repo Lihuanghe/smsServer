@@ -1,7 +1,5 @@
 package com.zx.sms.handler.api.smsbiz;
 
-import java.util.List;
-
 import org.springframework.stereotype.Component;
 
 import com.zx.sms.codec.sgip12.msg.SgipDeliverRequestMessage;
@@ -20,7 +18,9 @@ public class SGIPMessageReceiveHandler extends MessageReceiveHandler {
 		
 		if(msg instanceof SgipDeliverRequestMessage){
 			SgipDeliverRequestMessage deli = (SgipDeliverRequestMessage)msg;
-			SgipDeliverResponseMessage resp = new SgipDeliverResponseMessage(deli.getHeader());
+			SgipDeliverResponseMessage resp = new SgipDeliverResponseMessage();
+			resp.setSequenceNo(deli.getHeader().getSequenceId());
+			resp.getHeader().setNodeId(deli.getHeader().getNodeId());
 			resp.setResult((short)0);
 			resp.setTimestamp(deli.getTimestamp());
 			
@@ -28,7 +28,9 @@ public class SGIPMessageReceiveHandler extends MessageReceiveHandler {
 		}else if(msg instanceof SgipSubmitRequestMessage) {
 			
 			SgipSubmitRequestMessage submit = (SgipSubmitRequestMessage)msg;
-			SgipSubmitResponseMessage resp = new SgipSubmitResponseMessage(submit.getHeader());
+			SgipSubmitResponseMessage resp = new SgipSubmitResponseMessage();
+			resp.setSequenceNo(submit.getHeader().getSequenceId());
+			resp.getHeader().setNodeId(submit.getHeader().getNodeId());
 			resp.setTimestamp(submit.getTimestamp());
 			resp.setResult((short)0);
 			
