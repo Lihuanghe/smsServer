@@ -16,8 +16,8 @@ import org.springframework.stereotype.Component;
 
 import com.zx.sms.common.GlobalConstance;
 import com.zx.sms.connect.manager.EndpointEntity;
-import com.zx.sms.connect.manager.ServerEndpoint;
 import com.zx.sms.connect.manager.EndpointEntity.SupportLongMessage;
+import com.zx.sms.connect.manager.ServerServerEndpoint;
 import com.zx.sms.connect.manager.cmpp.CMPPEndpointEntity;
 import com.zx.sms.connect.manager.cmpp.CMPPServerChildEndpointEntity;
 import com.zx.sms.connect.manager.cmpp.CMPPServerEndpointEntity;
@@ -32,7 +32,7 @@ import com.zx.sms.connect.manager.smpp.SMPPServerChildEndpointEntity;
 import com.zx.sms.connect.manager.smpp.SMPPServerEndpointEntity;
 import com.zx.sms.handler.api.AbstractBusinessHandler;
 import com.zx.sms.handler.api.BusinessHandlerInterface;
-import com.zx.sms.handler.api.smsbiz.CmppEchoDeliverHandler;
+import com.zx.sms.handler.api.smsbiz.EchoDeliverHandler;
 
 import io.netty.channel.ChannelHandlerContext;
 /**
@@ -110,7 +110,8 @@ public class ConfigFileUtil {
 					}
 					tmp.setSupportLongmsg(SupportLongMessage.BOTH);
 					tmp.setIdleTimeSec((short)10);
-					((ServerEndpoint)tmpSever).addchild(tmp);
+					tmp.setWindow(100);
+					((ServerServerEndpoint)tmpSever).addchild(tmp);
 				}
 				result.add(tmpSever);
 		}
@@ -159,7 +160,7 @@ public class ConfigFileUtil {
 		List<BusinessHandlerInterface> bizHandlers = new ArrayList<BusinessHandlerInterface>();
 		tmp.setBusinessHandlerSet(bizHandlers);
 
-		bizHandlers.add(SpringContextUtil.getBean(CmppEchoDeliverHandler.class));
+		bizHandlers.add(SpringContextUtil.getBean(EchoDeliverHandler.class));
 		
 		if (handlers != null && !handlers.isEmpty()) {
 			for (Object handler : handlers) {
